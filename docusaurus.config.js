@@ -69,7 +69,7 @@ const config = {
             position: 'left',
             label: 'Clean Architecture Study',
           },
-          { to: '/members', label: 'Members', position: 'left' },
+          { to: '/blog', label: 'Members', position: 'left' },
           {
             href: 'https://github.com/facebook/docusaurus',
             label: 'GitHub',
@@ -89,7 +89,7 @@ const config = {
               },
               {
                 label: 'Members',
-                to: '/members',
+                to: '/blog',
               },
               {
                 label: 'GitHub',
