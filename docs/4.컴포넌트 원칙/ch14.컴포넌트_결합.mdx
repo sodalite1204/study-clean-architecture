@@ -3,3 +3,59 @@ sidebar_position: 3
 ---
 
 # 14장 컴포넌트 결합
+
+## 14-1. ADP: 의존성 비순환 원칙 Acyclic Dependencies Principle
+
+> 컴포넌트 의존성 그래프에 순환cycle이 있어서는 안 된다.
+> 
+- 많은 개발자가 동일한 소스 파일을 수정하는 환겨에서 저자가 말하는 ‘숙취 증후군’이 발생한다.
+- 누군가 마지막으로 수정한 코드 때문에 망가진 부분이 동작하도록 만들기 위해 코드를 수정하고, 또 수정하는 작업만이 계속될 뿐이다.
+- 이를 위한 첫 해결책은 ‘주 단위 빌드’ 이며, 두번째 해결책은 ‘의존성 비순환 원칙’이다.
+
+### 14-1-1. 주단위 빌드(Weekly Build)
+
+- 주 단위 빌드는 중간규모의 프로젝트에서 흔하게 사용된다.
+- 모든 개발자는 일주일의 첫 4일 동안은 서로를 신경쓰지 않는다. 그러다 금요일에 통합과 관련된 막대한 업보를 치르게 된다. 이를 해결하기 위해 통합의 시간을 늘리게 되다보면 점점 통합의 짐이 커지고 개발보다 통합에 드는 시간이 늘어나며 팀의 효율성도 서서히 나빠지게 된다.
+
+### 14-1-2. 순환 의존성 제거하기
+
+- 문제의 해결책은 개발환경을 ‘릴리스 가능한 컴포넌트 단위로 분리’하는 것이다.
+- 컴포넌트는 개별 개발자 또는 단일 개발팀이 책임질 수 있는 작업단위가 된다.
+- 개발자가 해당 컴포넌트를 만든 후 릴리스 하여 다른 개발자가 사용할 수 있도록 하며 담당 개발자는 컴포넌트에 릴리스 번호를 부여하고, 나머지 개발자는 릴리스된 버전을 사용한다. 새 릴리스를 적용할 시기도 자유롭게 결정할 수 있다.
+- 따라서 어떤 팀도 다른 팀에 의해 좌우되지 않으며 특정 컴포넌트가 변경되더라도 다른 팀에 즉각 영향을 주지 않는다.
+- 뿐만 아니라 통합은 작고 점진적으로 이루어지게 되어 이전처럼 모두가 한데 모여서 통합하는 일은 사라진다.
+- 이 구조에는 ‘순환’이 없다. 의존성 관계를 따라가면서 최초의 컴포넌트로 되돌아 갈 수 없으며 이 구조는 “비순호나 방향 그래프” 라는 사실에 주목해야 한다.
+
+![[https://icarus8050.tistory.com/47?category=402908]](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FcJY2WJ%2FbtqFdKYM5pD%2F9iAQh8liwWR2VGf2dtRhD1%2Fimg.png)
+
+[https://icarus8050.tistory.com/47?category=402908](https://icarus8050.tistory.com/47?category=402908)
+
+- Presenters를 담당하는 팀에서 새로운 릴리스를 만들면, 의존성 화살표를 거꾸로 따라가 view와 main 컴포넌트 둘다 영향을 받는다. 이 두 컴포넌트를 작업중인 개발자는 presenters의 새로운 릴리스와 자신의 작업물을 언제 통합할지를 반드시 결정해야한다.
+- main이 새로 릴리스 되면, 의존성 화살표가 없기에 이에 영향받는 컴포넌트는 전혀 없다.
+- 나머지 컴포넌트는 main에 대해 알지 못하므로 main이 변경되더라도 전혀 개의치 않는다.
+- presenters 개발자가 이 컴포넌트를 테스트 하고자 한다면 현재 사용중인 버전의 interactors와 entities를 이용해서 presenters 자체 버전을 빌드하면 그만이다.
+- 컴포넌트 분리는 개발자가 테스트를 구성할 때, 대체로 적은 노력이 든다는 뜻이며 고려해야할 변수도 상대적으로 적다는 의미다.
+- 시스템 전체를 릴리스 해야 할 때가 오면 릴리스 절차는 상향식으로 진행된다.
+
+### 14-1-3. 순환이 컴포넌트 의존성 그래프에 미치는 영향
+
+![[https://icarus8050.tistory.com/47?category=402908]](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbRPbB5%2FbtqFeO8jCoJ%2FSSnpoffssyDVoFnEgWcdYk%2Fimg.png)
+
+[https://icarus8050.tistory.com/47?category=402908](https://icarus8050.tistory.com/47?category=402908)
+
+- 새로운 요구사항이 발생해서 entities에 포함된 클래스 하나가 authorizer에 포함된 클래스 하나를 사용하도록 변경할 수 밖에 없다면, 위와 같이 순환의존성 (dependency cycle)이 발생한다.
+- 위의 순환 의존성으로 인해 발생하는 문제는 무엇일까?
+    - database컴포넌트 개발자는 해당 컴포넌트를 릴리스 하려면 entities와 호환되어야 하는데 그러나 더불어 authorizer, interactors와도 호환되어야 하게 됨. entities, authorizer, interactors는 사실상 하나의 거대한 컴포넌트가 되어버림.
+    - 해당 컴포넌트의 개발자들은 모두 서로에게 얽매이게 되며, 모두 항상 정확하게 동일한 릴리스를 사용해야하게 됨. = 숙취 증후군
+    - 테스트를 할 때에도 마찬가지이다.
+
+### 14-1-4. 순환 끊기
+
+- 컴포넌트 사이의 순환을 끊고 의존성을 다시 DAG로 원상복구 하는 일은 언제라도 가능하다.
+1. 의존성 역전 원칙 DIP를 적용한다.
+    
+    ![Untitled](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FtbjOz%2FbtqFg3QAhg9%2FAcxsQK7Wzh9S1a0kuNZefk%2Fimg.png)
+    
+2. Entities와 Authorizer가 모두 의존하는 새로운 컴포넌트를 만든다.
+
+![Untitled](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fb9Oyzi%2FbtqFe3YxamB%2F3O9ctMHCsYTIpKaTAJxkyk%2Fimg.png)
